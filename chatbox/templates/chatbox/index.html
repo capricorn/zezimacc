@@ -1,0 +1,176 @@
+{% load static %}
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+    </head>
+    <body>
+        <script>
+            const ws = new WebSocket('ws://' + window.location.host);
+
+            function usernameToHSL(username) {
+                var sum = 0;
+                for (var i = 0; i < username.length; i++) {
+                    sum += username[i].charCodeAt();
+                }
+
+                return `hsl(${sum % 366}, 65%, 65%)`
+            }
+
+            ws.onmessage = (msg) => {
+                console.log('msg: ' + msg.data);
+                msg = JSON.parse(msg.data);
+                // obtain timestamp, username, and message; then, append to div
+                var chatbox = document.getElementById('chatbox');
+                var messageEntry = document.createElement('div');
+                messageEntry.id = 'top';
+
+                var timestamp = document.createElement('span');
+                var username = document.createElement('span');
+                var message = document.createElement('p');
+
+                timestamp.textContent = msg['timestamp'];
+                timestamp.className = 'chatbox-text';
+                timestamp.id = 'chatbox-timestamp';
+
+                username.textContent = msg['username'];
+                username.className = 'chatbox-text';
+                username.id = 'chatbox-username';
+                username.style.color = usernameToHSL(msg['username']);
+
+                message.textContent = msg['message'];
+                message.className = 'chatbox-text';
+                message.id = 'chatbox-message';
+
+                // Add an ironman or mod here
+                messageEntry.appendChild(timestamp);
+                // Should instead add to json message
+                // <img=0> is mod
+                let regex = /<img=\d+>/;
+                //if (msg['username'].includes('<img=2>')) {
+                if (regex.test(msg['username'])) {
+                    username.textContent = username.textContent.replace(regex, '');
+                    /*
+                    console.log('adding image');
+                    var icon = document.createElement('img');
+                    icon.src = '{% static "chatbox/ironman.png" %}';
+                    messageEntry.appendChild(icon);
+                   */
+                }
+
+                messageEntry.appendChild(username);
+                messageEntry.appendChild(message);
+
+                /*
+                if (chatbox.childElementCount > 100) {
+                    chatbox.remove(chatbox.firstChild);
+                }
+               */
+                chatbox.appendChild(messageEntry);
+                chatbox.scrollTop = messageEntry.offsetHeight + messageEntry.offsetTop;
+                console.log('appended child');
+
+            };
+
+            ws.onclose = (msg) => {
+                console.log('closed: ' + msg);
+            };
+        </script>
+        <style>
+            #chatbox-username {
+                /*font-family: monospace;*/
+                /*
+                display: inline-block;
+                */
+                /*width: 225px;*/
+                max-width: 14ch;
+                min-width: 14ch;
+                /*font-size: 2vw;*/
+                font-weight: bold;
+                text-align: right;
+                padding-left: 1ch;
+                padding-right: 1ch;
+            }
+
+            #chatbox-timestamp {
+                /*
+                display: inline-block;
+                */
+                font-family: monospace;
+                /*width: 150px;*/
+                max-width: 8ch;
+            }
+
+            @media (max-width: 450px) {
+                #chatbox-timestamp {
+                    display: none;
+                }
+
+                #chatbox-username {
+                    /*font-family: monospace;*/
+                    /*
+                    display: inline-block;
+                    */
+                    /*width: 225px;*/
+                    max-width: 12ch;
+                    min-width: 12ch;
+                    /*font-size: 2vw;*/
+                    font-weight: bold;
+                    text-align: right;
+                    padding-right: 1ch;
+                }
+            }
+
+            #chatbox-message {
+                /*
+                display: inline-block;
+                */
+                /*width: inherit;*/
+                /*width: 400px;   */
+                /*
+                word-wrap: break-word;
+                */
+                flex-grow: 1;
+                margin: 0;
+                margin-left: 8px;
+            }
+
+            #top {
+                /*
+                vertical-align: top;
+                */
+                margin: .2vh;
+                display: flex;
+                align-content: flex-start;
+            }
+
+            .chatbox-text {
+                font-size: 2vmax;
+                font-family: sans-serif;
+            }
+
+            /*
+               try and hide timestamp on mobile (when width is small enough on viewport)
+           */
+            #chatbox {
+                width: 90%;
+                height: 90%;
+                margin: 0 auto;
+                background-color: rgba(240, 241, 242, .5);
+                overflow: auto;
+                /*padding: 12px;*/
+            }
+
+            #chatbox-table {
+                border-spacing: 15px;
+            }
+
+            .chatbox-entry {
+                font-size: 22px;
+            }
+        </style>
+
+        <div id="chatbox">
+        </div>
+    </body>
+</html>
